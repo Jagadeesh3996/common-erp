@@ -16,10 +16,21 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 
-export default function Page() {
+import { createClient } from "@/lib/supabase/server"
+
+export default async function Page() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const userData = {
+    name: user?.user_metadata?.name || user?.email?.split('@')[0] || "User",
+    email: user?.email || "",
+    avatar: user?.user_metadata?.avatar || "",
+  }
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar user={userData} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b">
           <div className="flex items-center gap-2 px-4 w-full">
