@@ -23,6 +23,9 @@ export async function login(prevState: any, formData: FormData) {
     redirect('/dashboard')
 }
 
+// Note: Session limits (max 2 per user) are enforced by a database trigger.
+// See supabase/migrations/20260108_limit_user_sessions.sql
+
 export async function signout() {
     const supabase = await createClient()
     await supabase.auth.signOut()

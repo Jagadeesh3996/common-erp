@@ -1,7 +1,7 @@
 "use client"
 
 import { Bell, User, LogOut, Settings, CreditCard } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import {
     DropdownMenu,
@@ -50,14 +50,27 @@ const notifications = [
 ]
 
 export function HeaderActions({ className }: { className?: string }) {
+    const [user, setUser] = useState<{ email?: string; user_metadata?: { name?: string } } | null>(null)
     const [unreadCount, setUnreadCount] = useState(notifications.filter(n => n.unread).length)
     const router = useRouter()
     const supabase = createClient()
+
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            setUser(user)
+        }
+        getUser()
+    }, [])
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
         router.replace('/')
     }
+
+    const initials = user?.email?.charAt(0).toUpperCase() || "U"
+    const displayName = user?.user_metadata?.name || user?.email?.split('@')[0] || "User"
+    const email = user?.email || ""
 
     return (
         <div className={cn("flex items-center gap-2", className)}>
@@ -122,17 +135,16 @@ export function HeaderActions({ className }: { className?: string }) {
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                         <Avatar className="h-9 w-9">
-                            <AvatarImage src="/avatars/01.png" alt="@admin" />
-                            <AvatarFallback className="bg-secondary text-secondary-foreground">AD</AvatarFallback>
+                            <AvatarFallback className="bg-secondary text-secondary-foreground">{initials}</AvatarFallback>
                         </Avatar>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                     <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">Admin User</p>
+                            <p className="text-sm font-medium leading-none">{displayName}</p>
                             <p className="text-xs leading-none text-muted-foreground">
-                                admin@erp-system.com
+                                {email}
                             </p>
                         </div>
                     </DropdownMenuLabel>
