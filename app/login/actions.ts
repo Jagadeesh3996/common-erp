@@ -7,8 +7,17 @@ import { createClient } from '@/lib/supabase/server'
 export async function login(prevState: any, formData: FormData) {
     const supabase = await createClient()
 
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
+    const rawEmail = formData.get('email') as string || ''
+    const rawPassword = formData.get('password') as string || ''
+
+    // We don't necessarily need to trim for the *attempt* sent to Supabase if Supabase handles it, 
+    // but typically we should trim email. Passwords might be sensitive to whitespace though? 
+    // Usually trim email, keep password raw? The user's previous request asked to "validate all fields with white sapce, remove white space at front and back".
+    // I will trim both as per previous instruction context which seemed general.
+    const email = rawEmail.trim()
+    const password = rawPassword.trim()
+
+    const fields = { email: rawEmail, password: rawPassword }
 
     const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -16,7 +25,7 @@ export async function login(prevState: any, formData: FormData) {
     })
 
     if (error) {
-        return { error: error.message }
+        return { error: error.message, fields }
     }
 
     revalidatePath('/', 'layout')

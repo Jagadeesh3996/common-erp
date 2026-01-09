@@ -1,5 +1,5 @@
 "use client"
-
+import { Eye, EyeOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -18,13 +18,14 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { login } from "@/app/login/actions"
-import { useActionState } from "react"
+import { useActionState, useState } from "react"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const [state, formAction, isPending] = useActionState(login, null)
+  const [showPassword, setShowPassword] = useState(false)
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -69,6 +70,10 @@ export function LoginForm({
                   type="email"
                   placeholder="m@example.com"
                   required
+                  defaultValue={state?.fields?.email}
+                  onChange={(e) => {
+                    e.target.value = e.target.value.toLowerCase().replace(/\s/g, "")
+                  }}
                 />
               </Field>
               <Field>
@@ -81,7 +86,31 @@ export function LoginForm({
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" name="password" type="password" required />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    defaultValue={state?.fields?.password}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword ? "Hide password" : "Show password"}
+                    </span>
+                  </Button>
+                </div>
               </Field>
               <Field>
                 {state?.error && (
@@ -93,7 +122,7 @@ export function LoginForm({
                   {isPending ? "Logging in..." : "Login"}
                 </Button>
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account? <a href="#" className="cursor-pointer">Sign up</a>
+                  Don&apos;t have an account? <a href="/signup" className="cursor-pointer">Sign up</a>
                 </FieldDescription>
               </Field>
             </FieldGroup>
