@@ -1,7 +1,5 @@
 
 ├── app
-│   ├── dashboard
-│   │   └── page.tsx
 │   ├── favicon.ico
 │   ├── globals.css
 │   ├── layout.tsx
@@ -19,8 +17,8 @@
 │   ├── signup
 │   │   ├── actions.ts
 │   │   └── page.tsx
-│   └── transaction
-│       └── page.tsx
+│   ├── transactions
+│   │   └── page.tsx
 ├── components
 │   ├── app-sidebar.tsx
 │   ├── dynamic-breadcrumbs.tsx

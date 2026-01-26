@@ -19,7 +19,9 @@
 - **Routes**:
   - `/`: Landing page with `<LoginForm />` component
   - `/signup`: Signup page with `<SignupForm />` component
-  - `/dashboard`: Protected route with server-side auth verification
+  - `/transactions`: Protected route (Main App Interface)
+  - `/report`: Protected route
+  - `/master/*`: Protected master data routes
 - **Authentication Features**:
   - Email/password login (`app/login/actions.ts`)
   - Email/password signup (`app/signup/actions.ts`)
@@ -28,33 +30,30 @@
   - Logout functionality (implemented in `nav-user.tsx`)
   - Route protection via `proxy.ts` (acts as middleware)
 - **Route Protection**:
-  - `proxy.ts`: Middleware that protects `/dashboard` routes
-  - Redirects unauthenticated users from `/dashboard` to `/`
-  - Redirects authenticated users from `/` or `/login` to `/dashboard`
+  - `proxy.ts`: Middleware that protects `/transactions`, `/report`, and `/master` routes
+  - Redirects unauthenticated users from protected routes to `/`
+  - Redirects authenticated users from `/` or `/login` to `/transactions`
   - Redirects `/login` to `/` (login form is on home page)
 
-### Dashboard Structure ✅
+### Main Layout Structure ✅
 - **Layout**: Sidebar layout using `AppSidebar` component
 - **Components**:
   - `AppSidebar`: Main navigation sidebar (collapsible, icon mode)
-  - `NavMain`: Renders main menu items (Playground, Models, Documentation, Settings)
-    - *Current state: Hardcoded sample data in `app-sidebar.tsx`*
-  - `NavProjects`: Renders projects list (Design Engineering, Sales & Marketing, Travel)
-    - *Current state: Hardcoded sample data in `app-sidebar.tsx`*
+  - `NavMain`: Main menu items:
+    - Transactions (`/transactions`)
+    - Report (`/report`)
+  - `NavProjects`: Master modules:
+    - Payment Modes (`/master/payment-modes`)
+    - Categories (`/master/categories`)
   - `NavUser`: User profile menu (bottom of sidebar)
-    - *Dynamic: Accepts user data from `dashboard/page.tsx`*
+    - *Dynamic: Accepts user data from `layout.tsx` or page props*
     - Shows user name, email, avatar
     - Logout functionality implemented
-    - Menu items: Upgrade to Pro, Account, Billing, Notifications (placeholders)
   - `TeamSwitcher`: Dropdown to switch teams
     - *Current state: Hardcoded "ERP" team by Varamio*
   - `HeaderActions`: Custom actions component in the header
   - `ModeToggle`: Dark/Light theme switcher
-  - `Breadcrumb`: Dynamic breadcrumb navigation (currently shows placeholder text)
-- **Dashboard Content**:
-  - **Payment Modes Card**: Shows live count of payment modes, links to module
-  - **Categories Card**: Pending implementation (placeholder active)
-  - Layout: Compact `h-32` cards for better aesthetics
+  - `Breadcrumb`: Dynamic breadcrumb navigation
 
 ### Master Module ✅
 - **Payment Modes**:
@@ -64,6 +63,16 @@
   - Route: `/master/categories`
   - Component: `components/categories/category-list.tsx`
   - Features: CRUD operations matching Payment Modes
+
+### Transaction Module ✅
+- **Route**: `/transactions` (Main Entry)
+- **Database**: 
+  - `transactions` table created
+  - Linked to Categories/Payment Modes with `ON DELETE CASCADE`
+  - RLS Policies enabled
+- **UI Components**:
+  - `TransactionForm`: Horizontal layout, date picker, search-enabled dropdowns (Select), validation.
+  - `TransactionList`: Searchable table, delete with confirmation alert, income/expense color coding.
 
 ### UI Improvements ✅
 - **Header**:
@@ -98,16 +107,17 @@
   - Enforces maximum 2 active sessions per user via database trigger
   - Trigger: `on_session_created` on `auth.sessions` table
   - Function: `handle_new_session()` automatically deletes oldest sessions
+- **Database Schema**:
+  - `transactions`, `categories`, `payment_modes` tables implemented
 
 ## File Structure Details
 
 ### `app/`
 - `layout.tsx`: Root layout with `ThemeProvider`, `Toaster` (sonner), and font configuration
 - `page.tsx`: Home entry point, shows Login form with "Varamio Technologies" branding
-- `dashboard/page.tsx`: Dashboard entry point
-  - Fetches user data server-side using Supabase
-  - Passes user data to `AppSidebar`
-  - Renders sidebar layout with header and placeholder content
+- `transactions/page.tsx`: Main Application entry point
+  - Renders `TransactionList` component
+- `report/page.tsx`: Reports page (Placeholder)
 - `login/actions.ts`: Server action for login (`login`, `signout`)
 - `signup/actions.ts`: Server action for signup with validation
 - `signup/actions.ts`: Server action for signup with validation
@@ -118,9 +128,9 @@
 
 ### `components/`
 - **Layout Components**:
-  - `app-sidebar.tsx`: Main sidebar with hardcoded navigation data
+  - `app-sidebar.tsx`: Main sidebar with transactions and report navigation
   - `nav-main.tsx`: Main navigation menu renderer
-  - `nav-projects.tsx`: Projects list renderer
+  - `nav-projects.tsx`: Master data list renderer
   - `nav-user.tsx`: User profile menu with logout
   - `team-switcher.tsx`: Team selection dropdown
   - `header-actions.tsx`: Header action buttons
@@ -157,9 +167,9 @@
 ### Authentication Flow
 1. User visits `/` → sees LoginForm
 2. User submits login → `app/login/actions.ts` → Supabase auth
-3. On success → redirects to `/dashboard`
+3. On success → redirects to `/transactions`
 4. `proxy.ts` middleware checks auth on every request
-5. Dashboard fetches user data server-side and displays in sidebar
+5. User is redirected to `/transactions` if authenticated
 
 ### Signup Flow
 1. User visits `/signup` → sees SignupForm
@@ -175,8 +185,9 @@
 ## TODO / Next Steps
 
 ### High Priority
-1. **Dynamic Navigation**: Replace hardcoded `data` in `app-sidebar.tsx` with real data from database/config
-2. **Dashboard Content**: Replace placeholder `div`s with actual ERP modules/content
+### High Priority
+1. **Dynamic Navigation**: Centralize navigation logic
+2. **Report Module**: Implement `app/report/page.tsx` content
 3. **Google OAuth**: Implement Google OAuth login (buttons exist but not functional)
 4. **Middleware Naming**: Consider renaming `proxy.ts` to `middleware.ts` for Next.js convention
 

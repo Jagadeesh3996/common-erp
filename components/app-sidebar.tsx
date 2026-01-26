@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Receipt,
   BarChart,
+  SquareChartGantt,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -46,15 +47,9 @@ const data = {
   ],
   navMain: [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard,
-      isActive: true,
-    },
-    {
-      title: "Transaction",
-      url: "/transaction",
-      icon: Receipt,
+      title: "Transactions",
+      url: "/transactions",
+      icon: SquareChartGantt,
     },
     {
       title: "Report",
