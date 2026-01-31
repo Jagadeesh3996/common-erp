@@ -147,3 +147,27 @@ Stores extended user information, subscription status, and roles.
 ### Triggers
 1.  **`on_auth_user_created`**: Automatically inserts a row into `user_profiles` when a new user signs up in `auth.users`.
 2.  **`on_auth_user_verified`**: Watches `auth.users` for verification. When verified, updates `verified_on` and sets `plan_expire_on` to **3 months** from verification date.
+
+---
+
+## Table: `audit_logs`
+
+Centralized audit logging for compliance and history tracking.
+
+### Columns
+
+| Name | Type | Key | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `bigint` | **PK** | *Identity* | Unique Log ID. |
+| `user_id` | `uuid` | | `NULL` | User who performed the action. Nullable to persist logs if user is deleted. |
+| `target_user_email` | `text` | | | Snapshot of user email for identification. |
+| `action` | `text` | | | Event type (e.g., `USER_REGISTERED`, `DELETE`, `LOGIN`). |
+| `entity` | `text` | | | The table or component involved (e.g., `transactions`). |
+| `details` | `jsonb` | | `'{}` | JSON object containing old/new values. |
+| `ip_address` | `text` | | | IP Address (if available). |
+| `created_at` | `timestamptz` | | `now()` | Timestamp of the event. |
+
+### Configured Triggers
+*   **`on_auth_user_audit`**: Logs `USER_REGISTERED` and `USER_DELETED`.
+*   **`on_auth_session_audit`**: Logs `USER_LOGIN`.
+*   **`audit_transactions`, `audit_categories`, ...**: Logs all `INSERT`, `UPDATE`, `DELETE` operations on core data tables.

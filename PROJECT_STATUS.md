@@ -120,6 +120,9 @@
   - Function: `handle_new_session()` automatically deletes oldest sessions
 - **Database Schema**:
   - `transactions`, `categories`, `payment_modes` tables implemented
+  - **Audit Logging** (New):
+    - `audit_logs` table tracks all user life-cycle events and data changes.
+    - Triggers implemented for Registration, Login, Deletion, and Data/Transaction modifications.
 
 ## File Structure Details
 
