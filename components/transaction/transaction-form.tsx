@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { ArrowDownCircle, ArrowUpCircle, CalendarIcon, Check, ChevronsUpDown, Loader2, Plus, Save } from "lucide-react"
-import { format } from "date-fns"
+import { ArrowDownCircle, ArrowUpCircle, CalendarIcon, Check, ChevronsUpDown, Loader2, Mic, MicOff, Plus, Save, Sparkles } from "lucide-react"
+import { format, parseISO } from "date-fns"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -58,6 +59,9 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
     const [bankAccountId, setBankAccountId] = useState<string>("none")
     const [description, setDescription] = useState("")
     const [processing, setProcessing] = useState(false)
+    const [aiProcessing, setAiProcessing] = useState(false)
+
+    const { isListening, transcript, startListening, stopListening, supported } = useSpeechRecognition()
 
     // Popover states
     const [openCategory, setOpenCategory] = useState(false)
@@ -131,6 +135,46 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
             }
         }
     }, [type, categories, categoryId]);
+
+    // Listen for transcript changes and process when stops listening
+    useEffect(() => {
+        if (!isListening && transcript.length > 5) {
+            handleAiProcess(transcript)
+        }
+    }, [isListening, transcript]);
+
+    const handleAiProcess = async (text: string) => {
+        try {
+            setAiProcessing(true)
+            const response = await fetch("/api/ai/process-transaction", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ transcript: text })
+            })
+
+            if (!response.ok) throw new Error("Failed to process with AI")
+
+            const data = await response.json()
+
+            // Auto-populate form
+            if (data.amount) setAmount(data.amount.toString())
+            if (data.type) setType(data.type as "income" | "expense")
+            if (data.date) setDate(parseISO(data.date))
+            if (data.description) setDescription(data.description)
+            if (data.category_id) setCategoryId(data.category_id.toString())
+            if (data.payment_mode_id) setPaymentModeId(data.payment_mode_id.toString())
+            if (data.bank_account_id) setBankAccountId(data.bank_account_id.toString())
+
+            toast.success("Form pre-filled by AI Assistant", {
+                icon: <Sparkles className="h-4 w-4 text-primary" />
+            })
+
+        } catch (error) {
+            console.error("AI error:", error)
+        } finally {
+            setAiProcessing(false)
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -463,11 +507,29 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                         />
                     </div>
 
-                    {/* Submit Action - Integrated into Row 2 */}
-                    <div className="flex flex-col justify-end sm:col-span-2 lg:col-span-1">
+                    {/* Submit & AI Actions */}
+                    <div className="flex flex-col justify-end sm:col-span-2 lg:col-span-1 gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={isListening ? stopListening : startListening}
+                            disabled={!supported || aiProcessing}
+                            className={cn(
+                                "cursor-pointer h-10 w-full font-semibold border-primary/20 hover:bg-primary/5 transition-all duration-300",
+                                isListening && "border-red-500 bg-red-50 text-red-600 hover:bg-red-100 animate-pulse"
+                            )}
+                        >
+                            {aiProcessing ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : isListening ? (
+                                <><MicOff className="mr-1.5 h-4 w-4" /> Listening...</>
+                            ) : (
+                                <><Mic className="mr-1.5 h-4 w-4 text-primary" /> Ask AI</>
+                            )}
+                        </Button>
                         <Button
                             type="submit"
-                            disabled={processing || loadingMedia}
+                            disabled={processing || loadingMedia || aiProcessing}
                             className="cursor-pointer h-10 w-full font-bold shadow-sm hover:translate-y-[-1px] active:translate-y-0 transition-all duration-200 bg-primary hover:bg-primary/90 text-primary-foreground group-hover/form:shadow-md"
                         >
                             {processing ? (
